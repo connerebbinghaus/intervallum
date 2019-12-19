@@ -40,11 +40,27 @@
 use gcollections::*;
 use gcollections::ops::*;
 use trilean::SKleene;
-use ops::*;
+use crate::ops::*;
 
-use std::ops::{Add, Sub, Mul};
-use std::cmp::{min, max};
-use std::fmt::{Formatter, Display, Error};
+#[cfg(std)]
+use std::{
+  ops::{Add, Sub, Mul},
+  cmp::{min, max},
+  fmt::{Formatter, Display, Error},
+};
+
+#[cfg(not(std))]
+use core::{
+  ops::{Add, Sub, Mul},
+  cmp::{min, max},
+  fmt::{Formatter, Display, Error},
+};
+
+#[cfg(not(std))]
+use alloc::{
+  vec, vec::Vec
+};
+
 use num::{Zero, Num};
 
 /// Closed interval (endpoints included).
@@ -1235,12 +1251,12 @@ mod tests {
     ];
 
     for (id,x,y,r) in cases.into_iter() {
-      println!("Test #{}", id);
+      // println!("Test #{}", id);
       assert!(x.difference(&y) == r, "{:?} difference {:?} is not equal to {:?}", x, y, r);
     }
 
     for (id,x,y,(r1,r2)) in sym_cases.into_iter() {
-      println!("Test #{}", id);
+      // println!("Test #{}", id);
       assert!(x.difference(&y) == r1, "{:?} difference {:?} is not equal to {:?}", x, y, r1);
       assert!(y.difference(&x) == r2, "{:?} difference {:?} is not equal to {:?}", y, x, r2);
     }

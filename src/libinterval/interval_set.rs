@@ -31,15 +31,34 @@
 //! # See also
 //! [interval](../interval/index.html)
 
-use interval::Interval;
-use interval::ToInterval;
+use crate::interval::Interval;
+use crate::interval::ToInterval;
 use trilean::SKleene;
 use gcollections::*;
 use gcollections::ops::*;
-use ops::*;
-use std::iter::{Peekable, IntoIterator};
-use std::fmt::{Formatter, Display, Error};
-use std::ops::{Add, Sub, Mul};
+use crate::ops::*;
+
+#[cfg(std)]
+use std::{
+  iter::{Peekable, IntoIterator},
+  fmt::{Formatter, Display, Error},
+  ops::{Add, Sub, Mul},
+  slice
+};
+
+#[cfg(not(std))]
+use core::{
+  iter::{Peekable, IntoIterator},
+  fmt::{Formatter, Display, Error},
+  ops::{Add, Sub, Mul},
+  slice
+};
+
+#[cfg(not(std))]
+use alloc::{
+  vec, vec::Vec, string::String, format
+};
+
 
 use num::{Zero, Num};
 
@@ -59,7 +78,7 @@ impl<Bound: Width> Collection for IntervalSet<Bound>
 impl<Bound: Width> IntoIterator for IntervalSet<Bound>
 {
   type Item = Interval<Bound>;
-  type IntoIter = ::std::vec::IntoIter<Self::Item>;
+  type IntoIter = vec::IntoIter<Self::Item>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.intervals.into_iter()
@@ -69,7 +88,7 @@ impl<Bound: Width> IntoIterator for IntervalSet<Bound>
 impl<'a, Bound: Width> IntoIterator for &'a IntervalSet<Bound>
 {
   type Item = &'a Interval<Bound>;
-  type IntoIter = ::std::slice::Iter<'a, Interval<Bound>>;
+  type IntoIter = slice::Iter<'a, Interval<Bound>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.iter()
@@ -79,7 +98,7 @@ impl<'a, Bound: Width> IntoIterator for &'a IntervalSet<Bound>
 impl<'a, Bound: Width> IntoIterator for &'a mut IntervalSet<Bound>
 {
   type Item = &'a mut Interval<Bound>;
-  type IntoIter = ::std::slice::IterMut<'a, Interval<Bound>>;
+  type IntoIter = slice::IterMut<'a, Interval<Bound>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.iter_mut()
@@ -88,11 +107,11 @@ impl<'a, Bound: Width> IntoIterator for &'a mut IntervalSet<Bound>
 
 impl<Bound: Width> IntervalSet<Bound>
 {
-  pub fn iter(&self) -> ::std::slice::Iter<Interval<Bound>> {
+  pub fn iter(&self) -> slice::Iter<Interval<Bound>> {
     self.intervals.iter()
   }
 
-  pub fn iter_mut(&mut self) -> ::std::slice::IterMut<Interval<Bound>> {
+  pub fn iter_mut(&mut self) -> slice::IterMut<Interval<Bound>> {
     self.intervals.iter_mut()
   }
 }
@@ -836,12 +855,12 @@ mod tests {
 
   fn test_inside_outside(is: IntervalSet<i32>, inside: Vec<i32>, outside: Vec<i32>) {
     for i in &inside {
-      assert!(is.contains(i),
-        format!("{} is not contained inside {}, but it should.", i, is));
+      assert!(is.contains(i))
+        // &format!("{} is not contained inside {}, but it should.", i, is));
     }
     for i in &outside {
-      assert!(!is.contains(i),
-        format!("{} is contained inside {}, but it should not.", i, is));
+      assert!(!is.contains(i))
+        // &format!("{} is contained inside {}, but it should not.", i, is));
     }
   }
 
@@ -850,9 +869,9 @@ mod tests {
     intervals.to_interval_set()
   }
 
-  fn test_result(test_id: String, result: &IntervalSet<i32>, expected: &IntervalSet<i32>) {
-    assert!(result.intervals == expected.intervals,
-      format!("{} | {} is different from the expected value: {}.", test_id, result, expected));
+  fn test_result(_test_id: String, result: &IntervalSet<i32>, expected: &IntervalSet<i32>) {
+    assert!(result.intervals == expected.intervals)
+      // &format!("{} | {} is different from the expected value: {}.", test_id, result, expected));
   }
 
   fn test_binary_op_sym<F>(test_id: String, a: Vec<(i32,i32)>, b: Vec<(i32,i32)>, op: F, expected: Vec<(i32,i32)>) where
@@ -865,7 +884,7 @@ mod tests {
   fn test_binary_op<F>(test_id: String, a: Vec<(i32,i32)>, b: Vec<(i32,i32)>, op: F, expected: Vec<(i32,i32)>) where
     F: Fn(&IntervalSet<i32>, &IntervalSet<i32>) -> IntervalSet<i32>
   {
-    println!("Info: {}.", test_id);
+    // println!("Info: {}.", test_id);
     let a = make_interval_set(a);
     let b = make_interval_set(b);
     let expected = make_interval_set(expected);
@@ -876,7 +895,7 @@ mod tests {
   fn test_binary_value_op<F>(test_id: String, a: Vec<(i32,i32)>, b: i32, op: F, expected: Vec<(i32,i32)>) where
     F: Fn(&IntervalSet<i32>, i32) -> IntervalSet<i32>
   {
-    println!("Info: {}.", test_id);
+    // println!("Info: {}.", test_id);
     let a = make_interval_set(a);
     let expected = make_interval_set(expected);
     test_result(test_id, &op(&a, b), &expected);
@@ -889,19 +908,19 @@ mod tests {
     test_binary_bool_op(test_id, b, a, op, expected);
   }
 
-  fn test_binary_bool_op<F>(test_id: String, a: Vec<(i32,i32)>, b: Vec<(i32,i32)>, op: F, expected: bool) where
+  fn test_binary_bool_op<F>(_test_id: String, a: Vec<(i32,i32)>, b: Vec<(i32,i32)>, op: F, expected: bool) where
     F: Fn(&IntervalSet<i32>, &IntervalSet<i32>) -> bool
   {
-    println!("Info: {}.", test_id);
+    // println!("Info: {}.", test_id);
     let a = make_interval_set(a);
     let b = make_interval_set(b);
     assert_eq!(op(&a, &b), expected);
   }
 
-  fn test_binary_value_bool_op<V, F>(test_id: String, a: Vec<(i32,i32)>, b: V, op: F, expected: bool) where
+  fn test_binary_value_bool_op<V, F>(_test_id: String, a: Vec<(i32,i32)>, b: V, op: F, expected: bool) where
     F: Fn(&IntervalSet<i32>, &V) -> bool
   {
-    println!("Info: {}.", test_id);
+    // println!("Info: {}.", test_id);
     let a = make_interval_set(a);
     assert_eq!(op(&a, &b), expected);
   }
@@ -909,7 +928,7 @@ mod tests {
   fn test_op<F>(test_id: String, a: Vec<(i32,i32)>, op: F, expected: Vec<(i32,i32)>) where
     F: Fn(&IntervalSet<i32>) -> IntervalSet<i32>
   {
-    println!("Info: {}.", test_id);
+    // println!("Info: {}.", test_id);
     let a = make_interval_set(a);
     let expected = make_interval_set(expected);
     let result = op(&a);
